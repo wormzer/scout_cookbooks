@@ -23,6 +23,7 @@ end.run_action(:create)
 gem_package "scout" do
   version node[:scout][:version]
   action :upgrade
+	source "http://rubygems.org/"
 end
 
 if node[:scout][:key]
