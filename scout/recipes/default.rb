@@ -26,6 +26,13 @@ gem_package "scout" do
 	source "http://rubygems.org/"
 end
 
+# TEMPORARY we want the patched server_metrics. This can be removed when scout gem 5.8.4 is released
+gem_package "server_metrics" do
+  version '1.0.3'
+  action :upgrade
+	source "http://rubygems.org/"
+end
+
 if node[:scout][:key]
   scout_bin = node[:scout][:bin] ? node[:scout][:bin] : "#{Gem.bindir}/scout"
   name_attr = node[:scout][:name] ? %{ --name "#{node[:scout][:name]}"} : ""
