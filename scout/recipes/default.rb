@@ -26,6 +26,9 @@ gem_package "scout" do
 	source "http://rubygems.org/"
 end
 
+# needed for our private plugins
+gem_package "aws-sdk"
+
 # TEMPORARY we want the patched server_metrics. This can be removed when scout gem 5.8.4 is released
 gem_package "server_metrics" do
   version '1.0.3'
@@ -87,4 +90,9 @@ end
 
 (node[:scout][:plugin_gems] || []).each do |gemname|
   gem_package gemname
+end
+
+cookbook_file "/home/scout/.scout/scout_rsa.pub" do
+	source "scout_rsa.pub"
+	owner node[:scout][:user]
 end
