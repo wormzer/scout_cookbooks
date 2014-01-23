@@ -92,11 +92,11 @@ end
   gem_package gemname
 end
 
-directory "/home/node[:scout][:user]/.scout" do
+directory "/home/#{node[:scout][:user]}/.scout" do
 	owner node[:scout][:user]
 end
 
-cookbook_file "/home/node[:scout][:user]/.scout/scout_rsa.pub" do
+cookbook_file "/home/#{node[:scout][:user]}/.scout/scout_rsa.pub" do
 	source "scout_rsa.pub"
 	owner node[:scout][:user]
 end
