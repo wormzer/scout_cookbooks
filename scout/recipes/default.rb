@@ -39,6 +39,7 @@ end
 if node[:scout][:key]
   scout_bin = node[:scout][:bin] ? node[:scout][:bin] : "#{Gem.bindir}/scout"
   name_attr = node[:scout][:name] ? %{ --name "#{node[:scout][:name]}"} : ""
+  hostname_attr = node[:scout][:hostname] ? %{ --hostname "#{node[:scout][:hostname]}"} : ""
   server_attr = node[:scout][:server] ? %{ --server "#{node[:scout][:server]}"} : ""
   roles_attr = node[:scout][:roles] ? %{ --roles "#{node[:scout][:roles].map(&:to_s).join(',')}"} : ""
   http_proxy_attr = node[:scout][:http_proxy] ? %{ --http-proxy "#{node[:scout][:http_proxy]}"} : ""
