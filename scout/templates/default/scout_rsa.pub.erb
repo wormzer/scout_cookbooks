@@ -1,1 +1,3 @@
-<%= node[:scout][:public_key] %>
+-----BEGIN PUBLIC KEY-----
+<%= node[:scout][:public_key].scan(/.{1,#{64}}/) %>
+-----END PUBLIC KEY-----
