@@ -73,30 +73,19 @@ if node[:scout][:public_key]
   end
 end
 
-if node[:scout][:delete_on_shutdown]
-  gem_package 'scout_api'
-  template "/etc/rc0.d/scout_shutdown" do
-    source "scout_shutdown.erb"
-    owner "root"
-    group "root"
-    mode 0755
-  end
-else
-  bash "delete_scout_shutdown" do
-    user "root"
-    code "rm -f /etc/rc0.d/scout_shutdown"
-  end
+template "/etc/init.d/remove_from_scout" do
+	source "remove_from_scout.erb"
+	owner "root"
+	group "root"
+	mode 0755
+end
+
+link "/etc/rc0.d/K20remove_from_scout" do
+	to "/etc/init.d/remove_from_scout"
+
+	action node[:scout][:delete_on_shutdown] ? :create : :delete
 end
 
 (node[:scout][:plugin_gems] || []).each do |gemname|
   gem_package gemname
-end
-
-directory "/home/#{node[:scout][:user]}/.scout" do
-	owner node[:scout][:user]
-end
-
-cookbook_file "/home/#{node[:scout][:user]}/.scout/scout_rsa.pub" do
-	source "scout_rsa.pub"
-	owner node[:scout][:user]
 end
