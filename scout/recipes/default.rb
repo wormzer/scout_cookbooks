@@ -42,8 +42,32 @@ if node[:scout][:key]
     command "#{scout_bin} #{node[:scout][:key]}#{name_attr}#{hostname_attr}#{server_attr}#{roles_attr}#{http_proxy_attr}#{https_proxy_attr}#{environment_attr}"
     only_if do File.exist?(scout_bin) end
   end
+
+	template "/etc/init.d/scout_shutdown" do
+		source "scout_shutdown.erb"
+		owner "root"
+		group "root"
+		mode 0755
+	end
+
+	link "/etc/rc0.d/K01scout_shutdown" do
+		to "/etc/init.d/scout_shutdown"
+
+		action node[:scout][:delete_on_shutdown] ? :create : :delete
+	end
 else
   Chef::Log.warn "The agent will not report to scoutapp.com as a key wasn't provided. Provide a [:scout][:key] attribute to complete the install."
+
+	# clear out everything from the node that is invalid without a key
+	%w{/etc/init.d/scout_shutdown, /etc/init.d/remove_from_scout}.each do |file_needing_key|
+		file file_needing_key do
+			action :delete
+		end
+	end
+
+	link "/etc/rc0.d/K01scout_shutdown" do
+		action :delete
+	end
 end
 
 if node[:scout][:public_key]
@@ -64,31 +88,22 @@ if node[:scout][:public_key]
   end
 end
 
-template "/etc/init.d/scout_shutdown" do
-	source "scout_shutdown.erb"
-	owner "root"
-	group "root"
-	mode 0755
-end
-
-link "/etc/rc0.d/K20remove_from_scout" do
-	action :delete
-end
-
+# this was the old location installed by this script
 file "/etc/rc0.d/scout_shutdown" do
 	action :delete
-end
-
-file "/etc/init.d/remove_from_scout" do
-	action :delete
-end
-
-link "/etc/rc0.d/K01scout_shutdown" do
-	to "/etc/init.d/scout_shutdown"
-
-	action node[:scout][:delete_on_shutdown] ? :create : :delete
 end
 
 (node[:scout][:plugin_gems] || []).each do |gemname|
   gem_package gemname
 end
+
+#
+# NOTE: matt wormley's old name, remove it from everything, then remove this
+#
+link "/etc/rc0.d/K20remove_from_scout" do
+	action :delete
+end
+file "/etc/init.d/remove_from_scout" do
+	action :delete
+end
+
