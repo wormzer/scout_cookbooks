@@ -59,12 +59,9 @@ else
   Chef::Log.warn "The agent will not report to scoutapp.com as a key wasn't provided. Provide a [:scout][:key] attribute to complete the install."
 
 	# clear out everything from the node that is invalid without a key
-	%w{/etc/init.d/scout_shutdown, /etc/init.d/remove_from_scout}.each do |file_needing_key|
-		file file_needing_key do
-			action :delete
-		end
+	file "/etc/init.d/scout_shutdown" do
+		action :delete
 	end
-
 	link "/etc/rc0.d/K01scout_shutdown" do
 		action :delete
 	end
