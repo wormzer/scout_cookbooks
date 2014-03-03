@@ -1,0 +1,24 @@
+set -u
+
+echo 'Removing scout from cron'
+crontab -ru <%= node[:scout][:user] %>
+
+echo -n 'Waiting for running scout process to complete...'
+while true
+do
+	if ps -ef | grep "<%= node[:scout][:key] %>" | grep <%= node[:scout][:bin] %> > /dev/null
+	then
+		echo -n '.'
+		sleep 2
+	else
+		break
+	fi
+done
+
+echo
+echo 'Last report to scout has completed. Now removing host from scout.'
+curl -X DELETE https://scoutapp.com/api/v1/<%= node[:scout][:key] %>/servers?hostname="<%= node[:scout][:hostname] ? node[:scout][:hostname] : `hostname`.chop %>"
+
+echo 'Done.'
+
+<%# vim: set ts=2 sw=2 tw=0 softtabstop=2 noet ft=sh:%>

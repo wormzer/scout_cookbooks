@@ -64,15 +64,23 @@ if node[:scout][:public_key]
   end
 end
 
-template "/etc/init.d/remove_from_scout" do
-	source "remove_from_scout.erb"
+template "/etc/init.d/scout_shutdown" do
+	source "scout_shutdown.erb"
 	owner "root"
 	group "root"
 	mode 0755
 end
 
 link "/etc/rc0.d/K20remove_from_scout" do
-	to "/etc/init.d/remove_from_scout"
+	action :delete
+end
+
+file "/etc/init.d/remove_from_scout" do
+	action :delete
+end
+
+link "/etc/rc0.d/K01scout_shutdown" do
+	to "/etc/init.d/scout_shutdown"
 
 	action node[:scout][:delete_on_shutdown] ? :create : :delete
 end
