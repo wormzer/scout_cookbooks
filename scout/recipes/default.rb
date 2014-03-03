@@ -75,6 +75,10 @@ link "/etc/rc0.d/K20remove_from_scout" do
 	action :delete
 end
 
+file "/etc/rc0.d/scout_shutdown" do
+	action :delete
+end
+
 file "/etc/init.d/remove_from_scout" do
 	action :delete
 end
