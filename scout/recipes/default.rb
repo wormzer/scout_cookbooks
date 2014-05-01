@@ -50,21 +50,13 @@ if node[:scout][:key]
 		mode 0755
 	end
 
-	link "/etc/rc0.d/K01scout_shutdown" do
-		to "/etc/init.d/scout_shutdown"
-
-		action node[:scout][:delete_on_shutdown] ? :create : :delete
+	if node[:scout][:delete_on_shutdown]
+		execute "chkconfig --add scout_shutdown"
+	else
+		execute "chkconfig --del scout_shutdown"
 	end
 else
   Chef::Log.warn "The agent will not report to scoutapp.com as a key wasn't provided. Provide a [:scout][:key] attribute to complete the install."
-
-	# clear out everything from the node that is invalid without a key
-	file "/etc/init.d/scout_shutdown" do
-		action :delete
-	end
-	link "/etc/rc0.d/K01scout_shutdown" do
-		action :delete
-	end
 end
 
 if node[:scout][:public_key]

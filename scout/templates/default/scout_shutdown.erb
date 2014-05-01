@@ -1,22 +1,48 @@
-#!/bin/bash
+#!/bin/sh
+#
+# app_shutdown:   shutdown application node (scout)
+#
+# chkconfig: 3456 90 01
+# description:  Orderly shutdown of scout agent + removal from scoutapp.com on power down (or terminate in EC2)
+#
 
-set -u
+set -eu
 
-echo 'Removing scout from cron'
-crontab -ru <%= node[:scout][:user] %>
+if [ `id -u` != 0 ]
+then
+	echo "ERROR[$0]: Must be run as root user"
+	exit 1
+fi
 
-echo -n 'Waiting for running scout process to complete...'
-while ps h -u <%= node[:scout][:user] %> > /dev/null
-do
-	sleep 2
-	echo -n '.'
-done
+SUBSYS_FILE=/var/lock/subsys/scout_shutdown
 
-echo
-echo 'Last report to scout has completed. Now removing host from scout.'
-curl -sX DELETE https://scoutapp.com/api/v1/<%= node[:scout][:key] %>/servers?hostname="<%= node[:scout][:hostname] ? node[:scout][:hostname] : `hostname`.chop %>"
+case $1 in
+	start)
+		touch $SUBSYS_FILE
+		;;
+	stop)
+		echo 'Removing scout from cron'
+		crontab -ru <%= node[:scout][:user] %>
 
-echo
-echo 'Done.'
+		echo -n 'Waiting for running scout process to complete...'
+		while ps h -u <%= node[:scout][:user] %> > /dev/null
+		do
+			sleep 2
+			echo -n '.'
+		done
+
+		echo
+		echo 'Last report to scout has completed. Now removing host from scout.'
+		curl -sX DELETE https://scoutapp.com/api/v1/<%= node[:scout][:key] %>/servers?hostname="<%= node[:scout][:hostname] ? node[:scout][:hostname] : `hostname`.chop %>"
+
+		rm $SUBSYS_FILE || true
+		echo
+		echo 'Done.'
+		;;
+	*)
+		echo "Usage $0 {start|stop}"
+		exit 1
+esac
+
 
 <%# vim: set ts=2 sw=2 tw=0 softtabstop=2 noet ft=sh:%>
