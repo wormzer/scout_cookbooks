@@ -53,7 +53,7 @@ if node[:scout][:key]
 	if node[:scout][:delete_on_shutdown]
 		execute "chkconfig --add scout_shutdown"
 	else
-		execute "chkconfig --del scout_shutdown"
+		execute "chkconfig --del scout_shutdown || true"
 	end
 else
   Chef::Log.warn "The agent will not report to scoutapp.com as a key wasn't provided. Provide a [:scout][:key] attribute to complete the install."
