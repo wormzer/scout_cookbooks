@@ -6,7 +6,7 @@
 # description:  Orderly shutdown of scout agent + removal from scoutapp.com on power down (or terminate in EC2)
 #
 
-set -eu
+set -u
 
 if [ `id -u` != 0 ]
 then
