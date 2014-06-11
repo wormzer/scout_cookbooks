@@ -27,13 +27,19 @@ case $1 in
 		echo -n 'Waiting for running scout process to complete...'
 		while ps h -u <%= node[:scout][:user] %> > /dev/null
 		do
-			sleep 2
+			sleep 5
 			echo -n '.'
 		done
 
 		echo
-		echo 'Last report to scout has completed. Now removing host from scout.'
-		curl -sX DELETE https://scoutapp.com/api/v1/<%= node[:scout][:key] %>/servers?hostname="<%= node[:scout][:hostname] ? node[:scout][:hostname] : `hostname`.chop %>"
+		echo 'Last report to scout has completed'
+		if [ "${KEEP_IN_SCOUT-false}" = false ]
+		then
+			echo 'Now removing host from scout.'
+			curl -sX DELETE https://scoutapp.com/api/v1/<%= node[:scout][:key] %>/servers?hostname="<%= node[:scout][:hostname] ? node[:scout][:hostname] : `hostname`.chop %>"
+		else
+			echo 'Keeping node in scout.'
+		fi
 
 		rm $SUBSYS_FILE || true
 		echo
