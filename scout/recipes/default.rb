@@ -56,7 +56,7 @@ if node[:scout][:key]
 	end
 
 	if node[:scout][:delete_on_shutdown]
-		execute "chkconfig --add scout_shutdown"
+		execute "chkconfig --del scout_shutdown && chkconfig --add scout_shutdown"
 	else
 		execute "chkconfig --del scout_shutdown || true"
 	end
