@@ -4,100 +4,20 @@
 
 Chef::Log.info "Loading: #{cookbook_name}::#{recipe_name}"
 
-
-# create group and user
-group node[:scout][:group] do
-	action [ :create, :manage ]
-end.run_action(:create)
-
-user node[:scout][:user] do
-	comment "Scout Agent"
-	gid node[:scout][:group]
-	home "/home/#{node[:scout][:user]}"
-	supports :manage_home => true
-	action [ :create, :manage ]
-	only_if do node[:scout][:user] != 'root' end
-end.run_action(:create)
-
-# install scout agent gem
-gem_package "scout" do
+scout_agent "scout agent" do
+	key node[:scout][:key]
+	user node[:scout][:user]
+	group node[:scout][:group]
+	name node[:scout][:name]
+	hostname node[:scout][:hostname]
+	roles node[:scout][:roles]
+	bin node[:scout][:bin]
 	version node[:scout][:version]
-	action :upgrade
-	source "http://rubygems.org/"
+	public_key node[:scout][:public_key]
+	http_proxy node[:scout][:http_proxy]
+	https_proxy node[:scout][:https_proxy]
+	delete_on_shutdown node[:scout][:delete_on_shutdown]
+	plugin_gems node[:scout][:plugin_gems]
+	environment node[:scout][:environment]
+	crontab_action node[:scout][:crontab_action]
 end
-
-if node[:scout][:key]
-	scout_bin = node[:scout][:bin] ? node[:scout][:bin] : "#{Gem.bindir}/scout"
-	name_attr = node[:scout][:name] ? %{ --name "#{node[:scout][:name]}"} : ""
-	hostname_attr = node[:scout][:hostname] ? %{ --hostname "#{node[:scout][:hostname]}"} : ""
-	server_attr = node[:scout][:server] ? %{ --server "#{node[:scout][:server]}"} : ""
-	roles_attr = node[:scout][:roles] ? %{ --roles "#{node[:scout][:roles].map(&:to_s).join(',')}"} : ""
-	http_proxy_attr = node[:scout][:http_proxy] ? %{ --http-proxy "#{node[:scout][:http_proxy]}"} : ""
-	https_proxy_attr = node[:scout][:https_proxy] ? %{ --https-proxy "#{node[:scout][:https_proxy]}"} : ""
-	environment_attr = node[:scout][:environment] ? %{ --environment "#{node[:scout][:environment]}"} : ""
-
-	# schedule scout agent to run via cron
-	if node[:scout][:crontab_action]
-		cron "scout_run" do
-			user node[:scout][:user]
-			command "#{scout_bin} #{node[:scout][:key]}#{name_attr}#{hostname_attr}#{server_attr}#{roles_attr}#{http_proxy_attr}#{https_proxy_attr}#{environment_attr}"
-
-			action node[:scout][:crontab_action]
-
-			only_if do File.exist?(scout_bin) end
-		end
-	end
-
-	template "/etc/init.d/scout_shutdown" do
-		source "scout_shutdown.erb"
-		owner "root"
-		group "root"
-		mode 0755
-	end
-
-	if node[:scout][:delete_on_shutdown]
-		execute "chkconfig --del scout_shutdown && chkconfig --add scout_shutdown"
-	else
-		execute "chkconfig --del scout_shutdown || true"
-	end
-else
-	Chef::Log.warn "The agent will not report to scoutapp.com as a key wasn't provided. Provide a [:scout][:key] attribute to complete the install."
-end
-
-if node[:scout][:public_key]
-	home_dir = Dir.respond_to?(:home) ? Dir.home(node[:scout][:user]) : File.expand_path("~#{node[:scout][:user]}")
-	data_dir = "#{home_dir}/.scout"
-	# create the .scout directory
-	directory data_dir do
-		group node[:scout][:group]
-		owner node[:scout][:user]
-		mode "0755"
-	end
-	template "#{data_dir}/scout_rsa.pub" do
-		source "scout_rsa.pub.erb"
-		mode 0440
-		owner node[:scout][:user]
-		group node[:scout][:group]
-		action :create
-	end
-end
-
-# this was the old location installed by this script
-file "/etc/rc0.d/scout_shutdown" do
-	action :delete
-end
-
-(node[:scout][:plugin_gems] || []).each do |gemname|
-	gem_package gemname
-end
-
-#
-# NOTE: matt wormley's old name, remove it from everything, then remove this
-#
-link "/etc/rc0.d/K20remove_from_scout" do
-	action :delete
-end
-file "/etc/init.d/remove_from_scout" do
-	action :delete
-end
-

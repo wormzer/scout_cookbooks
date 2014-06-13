@@ -1,5 +1,5 @@
 -----BEGIN PUBLIC KEY-----
-<% node[:scout][:public_key].scan(/.{1,#{64}}/).each do |line| %>
+<% @public_key.scan(/.{1,#{64}}/).each do |line| %>
 <%= line %>
 <% end %>
 -----END PUBLIC KEY-----

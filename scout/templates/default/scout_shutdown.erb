@@ -18,14 +18,17 @@ SUBSYS_FILE=/var/lock/subsys/scout_shutdown
 
 case $1 in
 	start)
-		touch $SUBSYS_FILE
+		if [ -f /var/lock/subsys ]
+		then
+			touch $SUBSYS_FILE
+		fi
 		;;
 	stop)
 		echo 'Removing scout from cron'
-		crontab -ru <%= node[:scout][:user] %>
+		crontab -ru <%= @user %>
 
 		echo -n 'Waiting for running scout process to complete...'
-		while ps h -u <%= node[:scout][:user] %> > /dev/null
+		while ps h -u <%= @user %> > /dev/null
 		do
 			sleep 5
 			echo -n '.'
@@ -36,12 +39,16 @@ case $1 in
 		if [ "${KEEP_IN_SCOUT-false}" = false ]
 		then
 			echo 'Now removing host from scout.'
-			curl -sX DELETE https://scoutapp.com/api/v1/<%= node[:scout][:key] %>/servers?hostname="<%= node[:scout][:hostname] ? node[:scout][:hostname] : `hostname`.chop %>"
+			curl -sX DELETE https://scoutapp.com/api/v1/<%= @key %>/servers?hostname="<%= @hostname ? @hostname : `hostname`.chop %>"
 		else
 			echo 'Keeping node in scout.'
 		fi
 
-		rm $SUBSYS_FILE || true
+		if [ -f /var/lock/subsys ]
+		then
+			rm $SUBSYS_FILE || true
+		fi
+
 		echo
 		echo 'Done.'
 		;;
@@ -51,4 +58,4 @@ case $1 in
 esac
 
 
-<%# vim: set ts=2 sw=2 tw=0 softtabstop=2 noet ft=sh:%>
+# vim: set ts=2 sw=2 tw=0 softtabstop=2 noet ft=sh:
