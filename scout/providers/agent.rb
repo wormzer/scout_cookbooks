@@ -53,13 +53,23 @@ action :create do
 			mode 0755
 		end
 
-		if new_resource.delete_on_shutdown
-			service "scout_shutdown" do
-				action [:enable, :start]
+		case node["platform"]
+		when "debian", "ubuntu"
+			if new_resource.delete_on_shutdown
+				service "scout_shutdown" do
+					action [:enable, :start]
+				end
+			else
+				service "scout_shutdown" do
+					action :disable
+				end
 			end
-		else
-			service "scout_shutdown" do
-				action :disable
+		when "redhat", "centos", "fedora"
+			# the service provider stuff for centos is pretty broken. We need to use --add to set up both K and S links
+			if new_resource.delete_on_shutdown
+				execute "chkconfig --del scout_shutdown && chkconfig --add scout_shutdown && /etc/init.d/scout_shutdown start"
+			else
+				execute "chkconfig --del scout_shutdown"
 			end
 		end
 	else
@@ -94,15 +104,4 @@ action :create do
 	(new_resource.plugin_gems || []).each do |gemname|
 		gem_package gemname
 	end
-
-	#
-	# NOTE: matt wormley's old name, remove it from everything, then remove this
-	#
-	link "/etc/rc0.d/K20remove_from_scout" do
-		action :delete
-	end
-	file "/etc/init.d/remove_from_scout" do
-		action :delete
-	end
-
 end
