@@ -18,7 +18,7 @@ SUBSYS_FILE=/var/lock/subsys/scout_shutdown
 
 case $1 in
 	start)
-		if [ -f /var/lock/subsys ]
+		if [ -d /var/lock/subsys ]
 		then
 			touch $SUBSYS_FILE
 		fi
@@ -44,13 +44,21 @@ case $1 in
 			echo 'Keeping node in scout.'
 		fi
 
-		if [ -f /var/lock/subsys ]
+		if [ -d /var/lock/subsys ]
 		then
 			rm $SUBSYS_FILE || true
 		fi
 
 		echo
 		echo 'Done.'
+		;;
+	status)
+		if [ -f $SUBSYS_FILE ]
+		then
+			exit 0
+		else
+			exit 3
+		fi
 		;;
 	*)
 		echo "Usage $0 {start|stop}"
