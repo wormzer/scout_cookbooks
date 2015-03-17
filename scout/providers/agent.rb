@@ -30,11 +30,11 @@ action :create do
 		https_proxy_attr = new_resource.https_proxy ? %{ --https-proxy "#{new_resource.https_proxy}"} : ""
 		environment_attr = new_resource.environment ? %{ --environment "#{new_resource.environment}"} : ""
 
-		# schedule scout agent to run via cron
+		# schedule scout agent to run via cron. We do not start monitoring until the uptime on the machine is at leat 5 minutes
 		if new_resource.crontab_action
 			cron "scout_run" do
 				user new_resource.user
-				command "#{scout_bin} #{new_resource.key}#{name_attr}#{hostname_attr}#{roles_attr}#{http_proxy_attr}#{https_proxy_attr}#{environment_attr}"
+				command "if [ `cut -d. -f1 /proc/uptime` -gt 300 ]; then #{scout_bin} #{new_resource.key}#{name_attr}#{hostname_attr}#{roles_attr}#{http_proxy_attr}#{https_proxy_attr}#{environment_attr}; fi"
 
 				action new_resource.crontab_action
 
