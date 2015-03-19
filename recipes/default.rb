@@ -82,12 +82,12 @@ if node[:scout][:public_key]
   end
 end
 
-template "/etc/init/scout-shutdown.conf" do
-  source "scout_shutdown.erb"
+template "/etc/init/scout.conf" do
+  source "init_scout.erb"
   owner "root"
   group "root"
-  action node[:scout][:delete_on_shutdown] ? :create : :delete
-  variables hostname: node[:scout][:hostname] || `hostname`
+  variables delete_on_shutdown: node[:scout][:delete_on_shutdown],
+            hostname: node[:scout][:hostname] || `hostname`
 end
 
 (node[:scout][:plugin_gems] || []).each do |gemname|

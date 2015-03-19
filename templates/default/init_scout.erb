@@ -1,0 +1,33 @@
+description "Scout server monitoring daemon"
+
+start on stopped rc RUNLEVEL=[2345]
+stop on starting rc RUNLEVEL=[!2345]
+
+respawn
+
+env SCOUT_USER=scoutd
+env SCOUT_GROUP=scoutd
+env SCOUT_RUN_DIR=/var/run/scout
+
+script
+
+  # Read configuration variable file if it is present
+  [ -f /etc/default/${UPSTART_JOB} ] && . /etc/default/${UPSTART_JOB}
+
+  mkdir -p ${SCOUT_RUN_DIR} && chown ${SCOUT_USER}:${SCOUT_GROUP} ${SCOUT_RUN_DIR}
+
+  exec start-stop-daemon --start --chuid ${SCOUT_USER}:${SCOUT_GROUP} -m --pidfile ${SCOUT_RUN_DIR}/${UPSTART_JOB}.pid --exec /usr/bin/scoutd start
+
+end script
+
+<% if @delete_on_shutdown %>
+post-stop script
+  while [ `ps aux | grep 'ruby /usr/share/scout/ruby/scout-client/bin/scout' | grep -v grep | wc -l` -gt 0 ]
+  do
+    echo -n .
+    sleep 5
+  done
+
+  curl -sX DELETE https://scoutapp.com/api/v1/cryOqYDdytXgZ6MVYdumSbrGUh6ehLJqyUBABZX5/servers?hostname=<%= @hostname %>
+end script
+<% end %>
