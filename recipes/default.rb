@@ -86,7 +86,6 @@ template "/etc/init/scout-shutdown.conf" do
   source "scout_shutdown.erb"
   owner "root"
   group "root"
-  mode 0755
   action node[:scout][:delete_on_shutdown] ? :create : :delete
   variables hostname: node[:scout][:hostname] || `hostname`
 end

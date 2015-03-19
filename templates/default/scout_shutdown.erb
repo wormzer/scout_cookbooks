@@ -9,5 +9,5 @@ task
 
 script
 	scoutctl stop || true
-	curl -sX DELETE https://scoutapp.com/api/v1/cryOqYDdytXgZ6MVYdumSbrGUh6ehLJqyUBABZX5/servers?<%= @hostname %>
+	curl -sX DELETE https://scoutapp.com/api/v1/cryOqYDdytXgZ6MVYdumSbrGUh6ehLJqyUBABZX5/servers?hostname=<%= @hostname %>
 end script
