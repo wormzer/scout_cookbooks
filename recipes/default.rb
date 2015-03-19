@@ -107,14 +107,6 @@ template "/var/lib/scoutd/.scout/plugins.properties" do
   mode 0664
   owner "scoutd"
   group "scoutd"
-  variables lazy {
-    plugin_properties = {}
-    node['scout']['plugin_properties'].each do |property, lookup_hash|
-      plugin_properties[property] = Chef::EncryptedDataBagItem.load(lookup_hash[:encrypted_data_bag], lookup_hash[:item])[lookup_hash[:key]]
-    end
-    {
-      :plugin_properties => plugin_properties
-    }
-  }
+  variables plugin_properties: node['scout']['plugin_properties']
   action :create
 end
