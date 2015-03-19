@@ -9,6 +9,8 @@ env SCOUT_USER=scoutd
 env SCOUT_GROUP=scoutd
 env SCOUT_RUN_DIR=/var/run/scout
 
+export RUNLEVEL
+
 script
 
   # Read configuration variable file if it is present
@@ -22,12 +24,18 @@ end script
 
 <% if @delete_on_shutdown %>
 post-stop script
-  while [ `ps aux | grep 'ruby /usr/share/scout/ruby/scout-client/bin/scout' | grep -v grep | wc -l` -gt 0 ]
-  do
-    echo -n .
-    sleep 5
-  done
+# if we are stopping, then we clear out of scoutapp.com.
+  if [ $RUNLEVEL = 0 ]
+  then
+    # First we wait for all scout processes to finish, then remove from scoutapp.com
+    while ps -u scoutd > /dev/null
+    do
+      echo -n .
+      sleep 5
+    done
 
-  curl -sX DELETE https://scoutapp.com/api/v1/cryOqYDdytXgZ6MVYdumSbrGUh6ehLJqyUBABZX5/servers?hostname=<%= @hostname %>
+    # with scoutd stopped, and all scoutd processes completed, it is safe to now remove our host from scoutapp.com
+    curl -sX DELETE https://scoutapp.com/api/v1/cryOqYDdytXgZ6MVYdumSbrGUh6ehLJqyUBABZX5/servers?hostname=<%= @hostname %>
+  fi
 end script
 <% end %>
