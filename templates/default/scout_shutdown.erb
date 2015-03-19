@@ -1,6 +1,13 @@
-#!/usr/bin/env ruby
-require 'rubygems'
-require 'scout_api'
-scout = Scout::Account.new('<%= node[:scout][:account_name] %>', '<%= node[:scout][:account_email] %>', '<%= node[:scout][:account_password] %>')
-server = Scout::Server.first(:host => Socket.gethostname)
-Scout::Server.delete(server.id)
+description     "Disable monitoring"
+author          "Matt Wormley <mwormley@adobe.com>"
+
+start on (starting rc
+          and runlevel [!2345])
+
+console output
+task
+
+script
+	scoutctl stop || true
+	curl -sX DELETE https://scoutapp.com/api/v1/cryOqYDdytXgZ6MVYdumSbrGUh6ehLJqyUBABZX5/servers?<%= @hostname %>
+end script
