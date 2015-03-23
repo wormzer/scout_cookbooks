@@ -27,21 +27,21 @@ when 'fedora'
   end
 end
 
+service "scout" do
+  action :nothing
+  supports :restart => true
+  restart_command "scoutctl restart"
+end
+
+# stop scoutd out of the box. Scout will start with its own upstart config
+package "scoutd" do
+  action :install
+  version node[:scout][:version]
+	notifies :stop, "service[scout]", :immediately
+end
+
 if node[:scout][:account_key]
   ENV['SCOUT_KEY'] = node[:scout][:account_key]
-
-  package "scoutd" do
-    action :install
-    version node[:scout][:version]
-  end
-
-  # We only need the scout service definition so that we can
-  # restart scout after we configure scoutd.yml
-  service "scout" do
-    action :nothing
-    supports :restart => true
-    restart_command "scoutctl restart"
-  end
 
   template "/etc/scout/scoutd.yml" do
     source "scoutd.yml.erb"
@@ -60,10 +60,12 @@ if node[:scout][:account_key]
       :https_proxy => node[:scout][:https_proxy]
     }
     action :create
-    notifies :restart, 'service[scout]', :delayed
   end
 else
   Chef::Log.warn "The agent will not report to scoutapp.com as a key wasn't provided. Provide a [:scout][:account_key] attribute to complete the install."
+  cookbook_file "/etc/scout/scoutd.yml" do
+    action :delete
+  end
 end
 
 directory "/var/lib/scoutd/.scout" do
@@ -88,6 +90,8 @@ template "/etc/init/scout.conf" do
   group "root"
   variables delete_on_shutdown: node[:scout][:delete_on_shutdown],
             hostname: node[:scout][:hostname] || `hostname`
+
+  action (node[:scout][:enabled]) ? :create : :delete
 end
 
 (node[:scout][:plugin_gems] || []).each do |gemname|
