@@ -6,7 +6,8 @@
 default[:scout][:account_key] = nil
 
 # optional
-default[:scout][:enabled] = true
+default[:scout][:action] = [:start, :enable]
+
 default[:scout][:hostname] = nil
 default[:scout][:display_name] = nil
 default[:scout][:log_file] = nil

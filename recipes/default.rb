@@ -37,7 +37,8 @@ end
 package "scoutd" do
   action :install
   version node[:scout][:version]
-	notifies :stop, "service[scout]", :immediately
+  notifies :stop, "service[scout]", :immediately
+  notifies :delete, "template[/etc/init/scout.conf]", :immediately
 end
 
 if node[:scout][:account_key]
@@ -60,6 +61,7 @@ if node[:scout][:account_key]
       :https_proxy => node[:scout][:https_proxy]
     }
     action :create
+    notifies(:restart, "service[scout]", :delayed) if File.exist?('/etc/init/scout.conf')
   end
 else
   Chef::Log.warn "The agent will not report to scoutapp.com as a key wasn't provided. Provide a [:scout][:account_key] attribute to complete the install."
@@ -84,6 +86,21 @@ if node[:scout][:public_key]
   end
 end
 
+if node[:scout][:action].nil?
+  scout_action = []
+elsif node[:scout][:action].is_a?(Symbol)
+  scout_action = [ node[:scout][:action] ]
+else
+  scout_action = node[:scout][:action]
+end
+
+# stop scout on action [:stop]
+ruby_block "service stopper" do
+  block {}
+  notifies :stop, "service[scout]", :immediately
+  only_if { scout_action.include?(:stop) }
+end
+
 template "/etc/init/scout.conf" do
   source "init_scout.erb"
   owner "root"
@@ -91,7 +108,11 @@ template "/etc/init/scout.conf" do
   variables delete_on_shutdown: node[:scout][:delete_on_shutdown],
             hostname: node[:scout][:hostname] || `hostname`
 
-  action (node[:scout][:enabled]) ? :create : :delete
+  action (if scout_action.include?(:enable)
+           :create
+         elsif scout_action.include?(:disable)
+           :delete
+         end)
 end
 
 (node[:scout][:plugin_gems] || []).each do |gemname|
@@ -107,3 +128,12 @@ template "/var/lib/scoutd/.scout/plugins.properties" do
   variables plugin_properties: node['scout']['plugin_properties']
   action :create
 end
+
+# stop scout on action [:start]
+ruby_block "service starter" do
+  block {}
+  notifies :start, "service[scout]", :delayed
+  only_if { scout_action.include?(:start) && File.exist?('/etc/init/scout.conf') }
+end
+
+#  vim: set ts=2 sw=2 tw=0 softtabstop=2 et :
