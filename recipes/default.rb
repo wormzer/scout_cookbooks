@@ -108,11 +108,13 @@ template "/etc/init/scout.conf" do
   variables delete_on_shutdown: node[:scout][:delete_on_shutdown],
             hostname: node[:scout][:hostname] || `hostname`
 
-  action (if scout_action.include?(:enable)
-           :create
-         elsif scout_action.include?(:disable)
-           :delete
-         end)
+  action ( if scout_action.include?(:enable)
+            :create
+          elsif scout_action.include?(:disable)
+            :delete
+          else
+            :nothing
+          end )
 end
 
 (node[:scout][:plugin_gems] || []).each do |gemname|
