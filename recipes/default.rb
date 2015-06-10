@@ -27,6 +27,14 @@ when 'fedora'
   end
 end
 
+if node[:scout][:action].nil?
+  scout_action = []
+elsif node[:scout][:action].is_a?(Symbol)
+  scout_action = [ node[:scout][:action] ]
+else
+  scout_action = node[:scout][:action]
+end
+
 service "scout" do
   action :nothing
   supports :restart => true
@@ -60,7 +68,7 @@ if node[:scout][:account_key]
       :http_proxy => node[:scout][:http_proxy],
       :https_proxy => node[:scout][:https_proxy]
     }
-    action :create
+    action (scout_action.include?(:disable) || scout_action.include?(:stop)) ? :nothing : :create
     notifies(:restart, "service[scout]", :delayed) if File.exist?('/etc/init/scout.conf')
   end
 else
@@ -84,14 +92,6 @@ if node[:scout][:public_key]
     group "scoutd"
     action :create
   end
-end
-
-if node[:scout][:action].nil?
-  scout_action = []
-elsif node[:scout][:action].is_a?(Symbol)
-  scout_action = [ node[:scout][:action] ]
-else
-  scout_action = node[:scout][:action]
 end
 
 # stop scout on action [:stop]
